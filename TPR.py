@@ -34,7 +34,9 @@ def get_keyphrase(filename='test.txt'):
         words = f.read()
     postag_words = pseg.cut(words)
     postag_words = ' '.join([(w.word).encode('utf-8')+(w.flag).encode('utf-8') for w in postag_words])
-    regex = r'
+    regex = r'([\x80-\xff]+n [\x80-\xff]+n)'
+    p = re.compile(regex)
+    return p.findall(postag_words)
 
 
         
