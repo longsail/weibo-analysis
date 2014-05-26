@@ -4,6 +4,7 @@ from collections import defaultdict
 from collections import Counter
 
 def get_stopwords(filename='stopwords'):
+
     with open(filename,'r') as f:
         lines = f.readlines()
     stopwords = [line.replace("\r\n",'') for line in lines]
@@ -11,9 +12,8 @@ def get_stopwords(filename='stopwords'):
     return stopwords
 
 
-
 def format(filename='data.txt'):
-    
+
     stopwords = get_stopwords()
     with open(filename,'r') as f:
         lines = f.readlines()
@@ -31,34 +31,38 @@ def format(filename='data.txt'):
             if string_to_file:
                 f.write(string_to_file+'\n')
 
-def get_worddgree(filename='reply.txt',window_size=4):
+def get_wordindex(filename='format.txt'):
+
     with open(filename,'r') as f:
-        word_seq = f.read()
-
-    seg_list = jieba.cut(word_seq)
-    word_list = [word.encode('utf-8') for word in seg_list]
-    length = len(seg_list)
-    wordgraph = [word_list[i]+' '+word_list[i+j] for i in xrange(0,length-window_size) for j in xrange(1,window_size)]
-    wordgraph_dict = Counter(word_graph)
-    #word_graph_set = set(word_graph)
-    word_indgree = defaultdict(lambda:defaultdict(int))
-    word_outdgree = defaultdict(int)
-    for edge in word_graph_dict:
-	words = edge.split(' ')
-	word_i = words[0]
-	word_j = words[1]
-	word_indgree[word_j][word_i]= wordgraph_dict[edge]
-	word_outdgree[word_i] += wordgraph_dict[edge]
-    return word_indgree,word_outdgree
-
-
+        lines = f.readlines()
+        
+    wordlist = []
+    for line in lines:
+        line = line.replace('\n','')
+        line = line.split(' ')
+        line = filter(None,line)
+        for word in line:
+            wordlist.append(word)
+    wordlist = list(set(wordlist))
+    wordindex = {word:index for index,word in enumerate(wordlist)}
     
+    with open(filename,'r') as f:
+        line = f.readlines()
 
-    #with open('word_graph.txt','w') as f:
-    #    for edge in word_graph_dict:
-    #        weight = str(word_graph_dict[edge])
-    #        f.write(edge+' '+weight+'\n')
+    f = open('lda_format.txt','w')
+    for line in lines:
+        line = line.replace('\n','')
+        line = line.split(' ')
+        line = filter(None,line)
+        word_dict = Counter(line)
+        count = len(word_dict)
+        string_to_file = ''
+        for word in word_dict:
+            string_to_file += str(wordindex[word])+' '+str(word_dict[word])+' '
+        if string_to_file:
+            f.write(str(count)+' '+string_to_file+'\n')
+    f.close()
 
 if __name__ == "__main__":
-    #format()
-    get_wordgraph()
+    format(filename='test.txt')
+    get_wordindex(filename='format.txt')
