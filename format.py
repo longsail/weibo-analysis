@@ -12,14 +12,11 @@ def get_stopwords(filename='stopwords'):
     stopwords = set(stopwords)
     return stopwords
 
-
 def format(filename='data.txt'):
 
     stopwords = get_stopwords()
-
     with open(filename,'r') as f:
         lines = f.readlines()
-    
     texts = []
     for line in lines:
         line = line.replace('\n','')
@@ -31,17 +28,32 @@ def format(filename='data.txt'):
     all_tokens = sum(texts,[])
     tokens_once = set(word for word in set(all_tokens) if all_tokens.count(word)==1)
     texts = [[word for word in text if word not in tokens_once] for text in texts]
-    dictionary = corpora.Dictionary(texts)
-    corpus = [dictionary.doc2bow(text) for text in texts]
+    return texts
 
-    doc = list(itertools.chain(*corpus))
-    topic_corpus = []
-    topic_corpus.append(doc)
-    return dictionary,corpus,topic_corpus
+def get_worddegree(filename='data.txt',window_size=5):
+	texts = format(filename)
+	wordlist = list(itertools.chain(*texts))
+	length = len(wordlist)
+	#wordgraph = [wordlist[i]+' '+wordlist[j] for i in range(length) for j in range(i+1,length-window_size)]
+	word_dict = Counter(wordgraph)
+	word_indegree = defaultdict(lambda:defaultdict(int))
+	word_outdegree = defaultdict(int)
+	for edge in word_dict:
+		word_i = edge.split(' ')[0]
+		word_j = edge.split(' ')[1]
+		word_indegree[word_j][word_i] = word_dict[edge]
+		word_outdegree[word_i] += word_dict[edge]
+	return word_indegree,word_outdegree
 
 def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
+	
+	texts = format(filename)
+    	dictionary = corpora.Dictionary(texts)
+    	corpus = [dictionary.doc2bow(text) for text in texts]
+    	doc = list(itertools.chain(*corpus))
+    	topic_corpus = []
+    	topic_corpus.append(doc)
 
-	dictionary,corpus,topic_corpus = format(filename)
 	word_num = len(dictionary)
 	lda = models.ldamodel.LdaModel(corpus=corpus,id2word=dictionary,num_topics=num_topics,update_every=update_every,passes=passes)
 	for topic_tuple in lda[topic_corpus]:
