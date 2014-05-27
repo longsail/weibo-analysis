@@ -2,7 +2,11 @@
 import operator
 from collections import defaultdict
 import jieba.posseg as pseg
-from format import get_worddgree
+import jieba
+from format import record_lda
+from format import get_worddegree
+
+	
 
 def wordrank(word_indegree,word_outdegree,word_distribution,daming_factor=0.85,max_iteration=100):
     nodes_num = len(word_distribution)
@@ -17,28 +21,15 @@ def wordrank(word_indegree,word_outdegree,word_distribution,daming_factor=0.85,m
             wordrank[word] = daming_factor*weight+(1-daming_factor)*word_disbution[word]
     return wordrank
 
-def topicalPR():
+def topicalPR(filename='data.txt'):
 	topic_wordrank = defaultdict(defaultdict)
-	word_indegree = get_worddgree[0]
-	word_outdegree = get_worddgree[1]
-	topic_worddistribution = 
+	word_indegree = get_worddgree(filename)[0]
+	word_outdegree = get_worddgree(filename)[1]
+	topic_worddistribution = record_lda(filename)[1]
 	for topic in topic_worddistribution:
 		topic_wordrank[topic] = wordrank(word_indegree,word_outdegree,topic_worddistribution[topic])
 	return topic_wordrank
 
-#def get_keyphrase(wordrank_topic,number=100):
-#   topic_keyphrase = {}
-#    for topic in wordrank_topic:
-#        wordrank = wordrank_topic[topic]
-#        sort_wordrank = sorted(wordrank.iteritems(),key=operator.itemgetter(1),reverse=True)
-#        topK_keyword = [item[1] for item in sort_wordrank[0:number]]
-#        for i in xrange(0,100):
-#            for j in xrange(0,100):
-#                keyphrase = topK_keyword[i]+' '+topK_keyword[j]
-#                topic_keyphrase[topic].append(keyphrase)
-#        topic_keyphrase[topic] = list(set(topic_keyphrase[topic]))
-#    return topic_keyphrase
- 
 def get_keyphrase(filename='test.txt'):
     with open(filename,'r') as f:
         words = f.read()
@@ -50,10 +41,13 @@ def get_keyphrase(filename='test.txt'):
     return candidate_keyphrases
 
 
-def rank_keyphrase(keyphrase_list,topic_wordrank):
+def rank_keyphrase(keyphrase_list,filename='data.txt'):
+	keyphrase_list = get_keyphrase(filename)
+	topic_distribution = record_lda(filename)[0]
+	topic_wordrank = topicalPR(filename)
 
 	topic_keyphraserank = defaultdict(lambda:defaultdict(int))
-	topic_list = topic_wordrank.keys()
+	topic_list = topic_distribution.keys()
 	for keyphrase in keyphrase_list:
 		word_list = keyphrase.split(' ')
 		for topic in topic_list:
@@ -63,26 +57,10 @@ def rank_keyphrase(keyphrase_list,topic_wordrank):
    	keyphrase_rank = defaultdict(int)
 	for keyphrase in keyphrase_list:
 		keyphrase_weight = 0.0
-        	for topic in topics:
-            		keyphrase_weight += topic_keyphraserank[topic][keyphrase]*pro(Z|D)
+        	for topic in topic_list:
+            		keyphrase_weight += topic_keyphraserank[topic][keyphrase]*topic_distribution[topic]
         	keyphrase_rank[keyphrase] = keyphrase_weight
 	return keyphrase_rank
-
- #   return keyphrase_rank
-#def rank_keyphrase(topic_keyphrase,wordrank_topic):
-#    topic_keyphrase_rank = {}
-#    for topic in topic_keyphrase:
-#        for keyphrase in topic_keyphrase[topic]:
-#            for word in keyphrase:
-#                topic_keyphrase_rank[topic][keyphrase] += wordrank_topic[topic][word]
-    
-#    keyphrase_rank = {}
-#    for keyphrase in keyphrase_list:
-#        for topic in topics:
-#            keyphrase_weight += keyphrase_rank_topic[topic][keyphrase]*pro(Z|D)
-#        keyphrase_rank[keyphrase] = keyphrase_weight
-
- #   return keyphrase_rank
 
 
 if __name__ == "__main__":
