@@ -13,7 +13,7 @@ def get_stopwords(filename='stopwords'):
     return stopwords
 
 
-def format(filename='audi.txt'):
+def format(filename='data.txt'):
 
     stopwords = get_stopwords()
 
@@ -33,7 +33,27 @@ def format(filename='audi.txt'):
     texts = [[word for word in text if word not in tokens_once] for text in texts]
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
-    return dictionary,corpus
+
+    doc = list(itertools.chain(*corpus))
+    topic_corpus = []
+    topic_corpus.append(doc)
+    return dictionary,corpus,topic_corpus
+
+def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
+
+	dictionary,corpus,topic_corpus = format(filename)
+	word_num = len(dictionary)
+	lda = models.ldamodel.LdaModel(corpus=corpus,id2word=dictionary,num_topics=num_topics,update_every=update_every,passes=passes)
+	for topic_tuple in lda[topic_corpus]:
+		topic_distribution = dict(topic_tuple)
+	word_distribution = defaultdict(lambda:defaultdict(float))
+	i = 0
+	for wordtuple_list in lda.show_topics(topics=num_topics,topn=word_num,formatted=False):
+    		inv_map = {v:k for k,v in dict(wordtuple_list).items()}
+    		word_distribution[i] = inv_map
+    		i += 1
+	return topic_distribution,word_distribution
 
 if __name__ == "__main__":
-    dictionary,corpus = format(filename='test.txt')
+	test1,test2 = record_lda(filename='test.txt')
+	print test1,test2
