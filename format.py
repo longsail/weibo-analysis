@@ -34,7 +34,7 @@ def get_worddegree(filename='data.txt',window_size=5):
 	texts = format(filename)
 	wordlist = list(itertools.chain(*texts))
 	length = len(wordlist)
-	#wordgraph = [wordlist[i]+' '+wordlist[j] for i in range(length) for j in range(i+1,length-window_size)]
+	wordgraph = [wordlist[i]+' '+wordlist[i+j] for i in range(0,length) for j in range(1,window_size) if i+j<length]
 	word_dict = Counter(wordgraph)
 	word_indegree = defaultdict(lambda:defaultdict(int))
 	word_outdegree = defaultdict(int)
