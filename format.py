@@ -1,8 +1,10 @@
 #coding=utf-8
 import jieba
+import itertools
 from collections import defaultdict
 from collections import Counter
 from gensim import corpora,models
+
 
 def get_stopwords(filename='stopwords'):
 
@@ -67,5 +69,8 @@ def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
 	return topic_distribution,word_distribution
 
 if __name__ == "__main__":
-	test1,test2 = record_lda(filename='test.txt')
-	print test1,test2
+	#test1,test2 = record_lda(filename='test.txt')
+	#print test1,sum(test1.values())
+        #word_outdegree,word_indegree = get_worddegree(filename='test.txt')
+        #print len(word_outdegree),len(word_indegree)
+        print len(format(filename='test.txt'))
