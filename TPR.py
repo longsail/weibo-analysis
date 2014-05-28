@@ -53,9 +53,11 @@ def rank_keyphrase(filename='data.txt'):
 	topic_list = topic_distribution.keys()
 	for keyphrase in keyphrase_list:
 		word_list = keyphrase.split(' ')
+                weight = 0.0
 		for topic in topic_list:
 			for word in word_list:
-				topic_keyphraserank[topic][keyphrase] += topic_wordrank[topic][word]
+                            weight += topic_wordrank[topic][word]
+		topic_keyphraserank[topic][keyphrase] += weight
     
    	keyphrase_rank = defaultdict(int)
 	for keyphrase in keyphrase_list:
@@ -68,8 +70,7 @@ def rank_keyphrase(filename='data.txt'):
         with open('keyphrase.txt','w') as f:
             for keyphrase in final_keyphrase:
                 f.write(str(keyphrase[0])+','+str(keyphrase[1]))
-	return keyphrase_rank
 
 
 if __name__ == "__main__":
-    keyphrase = rank_keyphrase(filename='test.txt')
+    rank_keyphrase(filename='test.txt')
