@@ -52,12 +52,13 @@ def rank_keyphrase(filename='data.txt'):
 	topic_keyphraserank = defaultdict(lambda:defaultdict(int))
 	topic_list = topic_distribution.keys()
 	for keyphrase in keyphrase_list:
-		word_list = keyphrase.split(' ')
-                weight = 0.0
-		for topic in topic_list:
-			for word in word_list:
-                            weight += topic_wordrank[topic][word]
-		topic_keyphraserank[topic][keyphrase] += weight
+            keyphrase = keyphrase.replace('n','')
+	    word_list = keyphrase.split(' ')
+            weight = 0.0
+	    for topic in topic_list:
+		for word in word_list:
+                    weight += topic_wordrank[topic][word]
+	    topic_keyphraserank[topic][keyphrase] += weight
     
    	keyphrase_rank = defaultdict(int)
 	for keyphrase in keyphrase_list:
