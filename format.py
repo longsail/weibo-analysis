@@ -68,7 +68,7 @@ def get_worddegree(filename='data.txt',window_size=5):
 		word_outdegree[word_i] += word_dict[edge]
 	return word_indegree,word_outdegree
 
-def record_lda(filename='data.txt',num_topics=3,update_every=0,passes=20):
+def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
 	
     	dictionary = corpora.Dictionary(texts)
     	corpus = [dictionary.doc2bow(text) for text in texts]
@@ -93,11 +93,11 @@ def record_lda(filename='data.txt',num_topics=3,update_every=0,passes=20):
 if __name__ == "__main__":
 	#test1,test2 = record_lda(filename='test.txt')
 	#print test1,sum(test1.values())
-	word_indegree,word_outdegree = get_worddegree(filename='test.txt')
+	#word_indegree,word_outdegree = get_worddegree(filename='test.txt')
 	#print len(word_outdegree),len(word_indegree)
-	#topicword_distribution = record_lda(filename='test.txt')[1]
+	topicword_distribution = record_lda(filename='test.txt')[1]
 	#count = 0
-	#f#or i in range(0,3):
+	#for i in range(0,3):
 	#	for key in topicword_distribution[i]:
 	#		if key not in word_outdegree.keys():
 	#			print i,key
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 	for keyphrase in keyphrase_list:
 		words_list = keyphrase.split(' ')
 		for word in words_list:
-			if word not in word_outdegree.keys():
+			if word not in topicword_distribution[0].keys():
 				count += 1
 				print word
 	print 'count',count
