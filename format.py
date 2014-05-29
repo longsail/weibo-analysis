@@ -1,5 +1,7 @@
 #coding=utf-8
+import re
 import jieba
+import jieba.posseg as pseg
 import itertools
 from collections import defaultdict
 from collections import Counter
@@ -20,20 +22,39 @@ def format(filename='data.txt'):
     with open(filename,'r') as f:
         lines = f.readlines()
     texts = []
+    postags = []
     for line in lines:
         line = line.replace('\n','')
-        seg_list = jieba.cut(line)
-        seg_list = [word.encode('utf-8') for word in seg_list]
-        seg_list = [word for word in seg_list if word not in stopwords and len(word)>=4]
-        texts.append(seg_list)
+        line = pseg.cut(line)
 
-    all_tokens = sum(texts,[])
-    tokens_once = set(word for word in set(all_tokens) if all_tokens.count(word)==1)
-    texts = [[word for word in text if word not in tokens_once] for text in texts]
-    return texts
+	wordslist = []
+	for postag in line:
+		flag = (postag.flag).encode('utf-8')
+		word = (postag.word).encode('utf-8')
+		if flag!='x' and len(word)>=4 and word not in stopwords:
+			wordslist.append(word)
+			postags.append(word+flag)
+        texts.append(wordslist)
+
+    #all_tokens = sum(texts,[])
+    #tokens_once = set(word for word in set(all_tokens) if all_tokens.count(word)==1)
+    #texts = [[word for word in text if word not in tokens_once] for text in texts]
+    return texts,postags
+
+texts,postags = format(filename='test.txt')
+
+
+def get_keyphrase(filename='data.txt'):
+    postag_words = ' '.join(postags)
+    regex = r'([\x80-\xff]+n [\x80-\xff]+n)'
+    p = re.compile(regex)
+    candidate_keyphrases = p.findall(postag_words)
+    print 'keyphrase_list',len(candidate_keyphrases)
+    candidate_keyphrases = [keyphrase.replace('n','') for keyphrase in candidate_keyphrases]
+    print 'keyphrase happy'
+    return candidate_keyphrases
 
 def get_worddegree(filename='data.txt',window_size=5):
-	texts = format(filename)
 	wordlist = list(itertools.chain(*texts))
 	length = len(wordlist)
 	wordgraph = [wordlist[i]+' '+wordlist[i+j] for i in range(0,length) for j in range(1,window_size) if i+j<length]
@@ -47,9 +68,8 @@ def get_worddegree(filename='data.txt',window_size=5):
 		word_outdegree[word_i] += word_dict[edge]
 	return word_indegree,word_outdegree
 
-def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
+def record_lda(filename='data.txt',num_topics=3,update_every=0,passes=20):
 	
-	texts = format(filename)
     	dictionary = corpora.Dictionary(texts)
     	corpus = [dictionary.doc2bow(text) for text in texts]
     	doc = list(itertools.chain(*corpus))
@@ -57,20 +77,39 @@ def record_lda(filename='data.txt',num_topics=10,update_every=0,passes=20):
     	topic_corpus.append(doc)
 
 	word_num = len(dictionary)
+
 	lda = models.ldamodel.LdaModel(corpus=corpus,id2word=dictionary,num_topics=num_topics,update_every=update_every,passes=passes)
 	for topic_tuple in lda[topic_corpus]:
 		topic_distribution = dict(topic_tuple)
-	word_distribution = defaultdict(lambda:defaultdict(float))
+	
+	topicword_distribution = defaultdict(lambda:defaultdict(float))
 	i = 0
 	for wordtuple_list in lda.show_topics(topics=num_topics,topn=word_num,formatted=False):
-    		inv_map = {v:k for k,v in dict(wordtuple_list).items()}
-    		word_distribution[i] = inv_map
+    		inv_map = {v.encode('utf-8'):k for k,v in dict(wordtuple_list).items()}
+    		topicword_distribution[i] = inv_map
     		i += 1
-	return topic_distribution,word_distribution
+	return topic_distribution,topicword_distribution
 
 if __name__ == "__main__":
 	#test1,test2 = record_lda(filename='test.txt')
 	#print test1,sum(test1.values())
-        #word_outdegree,word_indegree = get_worddegree(filename='test.txt')
-        #print len(word_outdegree),len(word_indegree)
-        print len(format(filename='test.txt'))
+	word_indegree,word_outdegree = get_worddegree(filename='test.txt')
+	#print len(word_outdegree),len(word_indegree)
+	#topicword_distribution = record_lda(filename='test.txt')[1]
+	#count = 0
+	#f#or i in range(0,3):
+	#	for key in topicword_distribution[i]:
+	#		if key not in word_outdegree.keys():
+	#			print i,key
+	#			count += 1
+	#print count
+	keyphrase_list = get_keyphrase(filename='test.txt')
+	count = 0
+	for keyphrase in keyphrase_list:
+		words_list = keyphrase.split(' ')
+		for word in words_list:
+			if word not in word_outdegree.keys():
+				count += 1
+				print word
+	print 'count',count
+
