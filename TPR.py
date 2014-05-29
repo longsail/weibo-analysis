@@ -22,9 +22,12 @@ def rank_word(word_distribution,word_indegree,word_outdegree,daming_factor=0.85,
         for word in word_distribution:
             weight = 0.0
             for word_j in word_indegree[word]:
-                out_degree = word_outdegree[word_j]
-		weight1 = word_indegree[word][word_j]
-                weight += 1.0*weight1*wordrank[word_j]/out_degree
+		try:
+                	out_degree = word_outdegree[word_j]
+			weight1 = word_indegree[word][word_j]
+                	weight += 1.0*weight1*wordrank[word_j]/out_degree
+		except:
+			pass
 	    wordrank[word] = daming_factor*weight+(1-daming_factor)*word_distribution[word]
     print 'happy' 
     return wordrank
@@ -49,14 +52,20 @@ def rank_keyphrase(filename='data.txt'):
             weight = 0.0
 	    for topic in topic_list:
 		for word in word_list:
-                    weight += topic_wordrank[topic][word]
+		    try:
+                    	weight += topic_wordrank[topic][word]
+		    except:
+			    pass
 	    topic_keyphraserank[topic][keyphrase] += weight
     
    	keyphrase_rank = defaultdict(int)
 	for keyphrase in keyphrase_list:
 		keyphrase_weight = 0.0
         	for topic in topic_list:
-            		keyphrase_weight += topic_keyphraserank[topic][keyphrase]*topic_distribution[topic]
+			try:
+            		    keyphrase_weight += topic_keyphraserank[topic][keyphrase]*topic_distribution[topic]
+			except:
+				pass
         	keyphrase_rank[keyphrase] = keyphrase_weight
         sorted_keyphrase = sorted(keyphrase_rank.iteritems(),key=operator.itemgetter(1),reverse=True)
         final_keyphrase = sorted_keyphrase[0:50]
