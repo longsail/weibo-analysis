@@ -47,7 +47,7 @@ def rank_word(word_distribution,word_indegree,word_outdegree,daming_factor=0.85,
     print 'wordrank',len(wordrank)
     return wordrank
 
-def topicalPR(word_indegree,word_outdegree,topic_worddistribution):
+def topical_pagerank(word_indegree,word_outdegree,topic_worddistribution):
     
     topic_wordrank = defaultdict(defaultdict)
     for topic in topic_worddistribution:
@@ -90,7 +90,7 @@ def rank_keyphrase(keyphrase_list,topic_wordrank,topic_distribution):
 def main(filename):
     keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution = process.process_file(filename=filename)
     print 'keyphrases',len(keyphrases)
-    topic_wordrank = topicalPR(word_indegree,word_outdegree,topicword_distribution)
+    topic_wordrank = topical_pagerank(word_indegree,word_outdegree,topicword_distribution)
     rank_keyphrase(keyphrases,topic_wordrank,topic_distribution)
 
 
