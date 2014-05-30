@@ -1,20 +1,35 @@
+#!/usr/bin/env python
 #coding=utf-8
-import re
+import sys
 import operator
 import itertools
 from collections import defaultdict
-import jieba.posseg as pseg
-import jieba
-from format import record_lda
-from format import get_worddegree
-from format import get_keyphrase
+try:
+    import jieba
+    import jieba.posseg as pseg
+    import process
 
-topic_distribution,topic_worddistribution = record_lda(filename='test.txt')
+except ImportError:
+        print >> sys.stderr, """\
+
+There was a problem importing one of the Python modules required.
+The error leading to this problem was:
+
+%s
+
+Please install a package which provides this module, or
+verify that the module is installed correctly.
+
+It's possible that the above module doesn't match the current version of Python,
+which is:
+
+%s
+
+""" % (sys.exc_info(), sys.version)
+        sys.exit(1)
+
 
 def rank_word(word_distribution,word_indegree,word_outdegree,daming_factor=0.85,max_iteration=100):
-    for word in word_distribution:
-	    if word not in word_outdegree.keys():
-		    print 'not'
     
     word_num = len(word_distribution)
     wordrank = {word:1.0/word_num for word in word_distribution}
@@ -29,50 +44,56 @@ def rank_word(word_distribution,word_indegree,word_outdegree,daming_factor=0.85,
 		except:
 			pass
 	    wordrank[word] = daming_factor*weight+(1-daming_factor)*word_distribution[word]
-    print 'happy' 
+    print 'wordrank',len(wordrank)
     return wordrank
 
-def topicalPR(filename='data.txt'):
-	topic_wordrank = defaultdict(defaultdict)
-	word_indegree,word_outdegree = get_worddegree(filename)
-	#topic_worddistribution = record_lda(filename)[1]
-	for topic in topic_worddistribution:
-		topic_wordrank[topic] = rank_word(topic_worddistribution[topic],word_indegree,word_outdegree)
-	return topic_wordrank
+def topicalPR(word_indegree,word_outdegree,topic_worddistribution):
+    
+    topic_wordrank = defaultdict(defaultdict)
+    for topic in topic_worddistribution:
+        topic_wordrank[topic] = rank_word(topic_worddistribution[topic],word_indegree,word_outdegree)
+
+    return topic_wordrank
 
 
-def rank_keyphrase(filename='data.txt'):
-	keyphrase_list = get_keyphrase(filename)
-	topic_wordrank = topicalPR(filename)
-
-	topic_keyphraserank = defaultdict(lambda:defaultdict(int))
-	topic_list = topic_distribution.keys()
-	for keyphrase in keyphrase_list:
+def rank_keyphrase(keyphrase_list,topic_wordrank,topic_distribution):
+    print 'keyphrase_list',len(keyphrase_list)
+    topic_keyphraserank = defaultdict(lambda:defaultdict(int))
+    for topic in topic_distribution:
+        for keyphrase in keyphrase_list:
 	    word_list = keyphrase.split(' ')
             weight = 0.0
-	    for topic in topic_list:
-		for word in word_list:
-		    try:
-                    	weight += topic_wordrank[topic][word]
-		    except:
-			    pass
-	    topic_keyphraserank[topic][keyphrase] += weight
+	    for word in word_list:
+		try:
+                    weight += topic_wordrank[topic][word]
+		except:
+                    pass
+	    topic_keyphraserank[topic][keyphrase] = weight
     
-   	keyphrase_rank = defaultdict(int)
-	for keyphrase in keyphrase_list:
-		keyphrase_weight = 0.0
-        	for topic in topic_list:
-			try:
-            		    keyphrase_weight += topic_keyphraserank[topic][keyphrase]*topic_distribution[topic]
-			except:
-				pass
-        	keyphrase_rank[keyphrase] = keyphrase_weight
-        sorted_keyphrase = sorted(keyphrase_rank.iteritems(),key=operator.itemgetter(1),reverse=True)
-        final_keyphrase = sorted_keyphrase[0:50]
-        with open('keyphrase.txt','w') as f:
-            for keyphrase in final_keyphrase:
-                f.write(str(keyphrase[0])+','+str(keyphrase[1])+'\n')
+    keyphrase_rank = defaultdict(int)
+    for keyphrase in keyphrase_list:
+	keyphrase_weight = 0.0
+        for topic in topic_distribution:
+	    try:
+            	keyphrase_weight += topic_keyphraserank[topic][keyphrase]*topic_distribution[topic]
+	    except:
+                pass
+        keyphrase_rank[keyphrase] = keyphrase_weight
+        
+    sorted_keyphrase = sorted(keyphrase_rank.iteritems(),key=operator.itemgetter(1),reverse=True)
+    final_keyphrase = sorted_keyphrase[0:100]
+    print 'final_keyphrase',len(final_keyphrase)
+    with open('keyphrase_title1.txt','w') as f:
+        for keyphrase in final_keyphrase:
+            f.write(str(keyphrase[0])+','+str(keyphrase[1])+'\n')
+
+def main(filename):
+    keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution = process.process_file(filename=filename)
+    print 'keyphrases',len(keyphrases)
+    topic_wordrank = topicalPR(word_indegree,word_outdegree,topicword_distribution)
+    rank_keyphrase(keyphrases,topic_wordrank,topic_distribution)
 
 
+    
 if __name__ == "__main__":
-	rank_keyphrase(filename='test.txt')
+    main('title.txt')
