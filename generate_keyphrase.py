@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 import sys
+import time
 import operator
 import itertools
 from collections import defaultdict
@@ -82,8 +83,7 @@ def rank_keyphrase(keyphrase_list,topic_wordrank,topic_distribution):
         
     sorted_keyphrase = sorted(keyphrase_rank.iteritems(),key=operator.itemgetter(1),reverse=True)
     final_keyphrase = sorted_keyphrase[0:100]
-    print 'final_keyphrase',len(final_keyphrase)
-    with open('keyphrase_title1.txt','w') as f:
+    with open('keyphrase_cup.txt','w') as f:
         for keyphrase in final_keyphrase:
             f.write(str(keyphrase[0])+','+str(keyphrase[1])+'\n')
 
@@ -96,4 +96,6 @@ def main(filename):
 
     
 if __name__ == "__main__":
-    main('title.txt')
+    start = time.time()
+    main('test.txt')
+    print 'time',time.time()-start

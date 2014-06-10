@@ -3,6 +3,7 @@
 import re
 import sys
 import itertools
+import time
 from collections import defaultdict,Counter
 try:
     import jieba
@@ -34,53 +35,51 @@ def get_stopwords(filename='stopwords'):
     with open(filename,'r') as f:
         lines = f.readlines()
     
-    stopwords_list = [line.replace("\r\n",'') for line in lines]
-    stopwords = set(stopwords_list)
+    stopwords = set(line.rstrip("\r\n") for line in lines)
    
     return stopwords
 
 def format(filename='data.txt'):
 
     stopwords = get_stopwords()
-    
+     
     with open(filename,'r') as f:
         lines = f.readlines()
+    flags = ['n','nr','ns','nt','nz','nl','ng','a','ad','an','ag','al']
     texts = []
-    postag_list = []
+    postags = []
     for line in lines:
-        line = line.replace('\n','')
         line = pseg.cut(line)
-
 	wordslist = []
 	for postag in line:
-		flag = (postag.flag).encode('utf-8')
-		word = (postag.word).encode('utf-8')
-		if flag!='x' and len(word)>=4 and word not in stopwords:
-			wordslist.append(word)
-			postag_list.append(postag)
+            word = (postag.word).encode('utf-8')
+	    if postag.flag in flags and word not in stopwords and len(word)>=4:
+		wordslist.append(word)
+		postags.append(postag)
         texts.append(wordslist)
 
-    all_tokens = sum(texts,[])
-    tokens_once = set(word for word in set(all_tokens) if all_tokens.count(word)==1)
-    texts = [[word for word in text if word not in tokens_once] for text in texts]
-    postags = []
-    for postag_word in postag_list:
-        if (postag_word.word).encode('utf-8') not in tokens_once:
-            postags.append((postag_word.word).encode('utf-8')+(postag_word.flag).encode('utf-8'))
     return texts,postags
 
 
 def get_keyphrase(postags):
-    postag_words = ' '.join(postags)
-    regex = r'([\x80-\xff]+n [\x80-\xff]+n)'
-    p = re.compile(regex)
-    
-    candidate_keyphrases = p.findall(postag_words)
-    candidate_keyphrases = [keyphrase.replace('n','') for keyphrase in candidate_keyphrases]
+
+    candidate_keyphrases = []
+    keyphrase = []
+    for postag in postags:
+        if postag.flag in ['n','nr','ns','nt','nz','nl','ng']:
+            word = (postag.word).encode('utf-8')
+            keyphrase.append(postag.word)
+        else:
+            if keyphrase:
+                keyphrase_str = " ".join(keyphrase)
+                candidate_keyphrases.append(keyphrase_str)
+                keyphrase = []
+    if keyphrase:
+        candidate_keyphrases.append(keyphrase)
     
     return candidate_keyphrases
 
-def get_worddegree(texts,window_size=5):
+def get_worddegree(texts,window_size=3):
 
 	wordlist = list(itertools.chain(*texts))
 	length = len(wordlist)
@@ -95,7 +94,7 @@ def get_worddegree(texts,window_size=5):
 		word_outdegree[word_i] += word_dict[edge]
 	return word_indegree,word_outdegree
 
-def record_lda(texts,num_topics=10,update_every=0,passes=20):
+def record_lda(texts,num_topics=10,update_every=1,passes=1):
 	
     	dictionary = corpora.Dictionary(texts)
     	corpus = [dictionary.doc2bow(text) for text in texts]
@@ -104,8 +103,10 @@ def record_lda(texts,num_topics=10,update_every=0,passes=20):
     	topic_corpus.append(doc)
 
 	word_num = len(dictionary)
+        doc_num = len(texts)
+        chunksize = doc_num/1000
 
-	lda = models.ldamodel.LdaModel(corpus=corpus,id2word=dictionary,num_topics=num_topics,update_every=update_every,passes=passes)
+	lda = models.ldamodel.LdaModel(corpus=corpus,id2word=dictionary,num_topics=num_topics,update_every=update_every,chunksize=chunksize,passes=passes)
 	for topic_tuple in lda[topic_corpus]:
 		topic_distribution = dict(topic_tuple)
 	
@@ -126,7 +127,7 @@ def process_file(filename='data.txt'):
 
     return keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution
 
-if __name__ == "__main__":
+def main():
     keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution = process_file(filename='test1.txt')
     print len(word_indegree),len(word_outdegree),len(topicword_distribution[0])
     count = 0
@@ -137,3 +138,8 @@ if __name__ == "__main__":
                 print 'not'
                 count += 1
     print count
+
+if __name__ == "__main__":
+    start = time.time()
+    process_file(filename='test.txt')
+    print 'time',time.time()-start
