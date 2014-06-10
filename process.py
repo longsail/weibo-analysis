@@ -55,7 +55,6 @@ def format(filename='data.txt'):
             word = (postag.word).encode('utf-8')
 	    if postag.flag in flags and word not in stopwords and len(word)>=4:
 		wordslist.append(word)
-		postags.append(postag)
         texts.append(wordslist)
 
     return texts,postags
@@ -72,11 +71,12 @@ def get_keyphrase(postags):
         else:
             if keyphrase:
                 keyphrase_str = " ".join(keyphrase)
+                print keyphrase_str
                 candidate_keyphrases.append(keyphrase_str)
                 keyphrase = []
     if keyphrase:
-        candidate_keyphrases.append(keyphrase)
-    
+        keyphrase_str = " ".join(keyphrase)
+        candidate_keyphrases.append(keyphrase_str)
     return candidate_keyphrases
 
 def get_worddegree(texts,window_size=3):
@@ -122,22 +122,14 @@ def process_file(filename='data.txt'):
     
     texts,postags = format(filename=filename)
     keyphrases = get_keyphrase(postags=postags)
-    word_indegree,word_outdegree = get_worddegree(texts)
-    topic_distribution,topicword_distribution = record_lda(texts)
+    #word_indegree,word_outdegree = get_worddegree(texts)
+    #topic_distribution,topicword_distribution = record_lda(texts)
 
-    return keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution
+    return keyphrases#,word_indegree,word_outdegree,topic_distribution,topicword_distribution
 
 def main():
     keyphrases,word_indegree,word_outdegree,topic_distribution,topicword_distribution = process_file(filename='test1.txt')
     print len(word_indegree),len(word_outdegree),len(topicword_distribution[0])
-    count = 0
-    for keyphrase in keyphrases:
-        word_list = keyphrase.split(' ')
-        for word in word_list:
-            if word not in word_outdegree.keys():
-                print 'not'
-                count += 1
-    print count
 
 if __name__ == "__main__":
     start = time.time()
